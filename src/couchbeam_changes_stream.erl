@@ -243,22 +243,27 @@ decode_data(Data, #state{owner=Owner,
                          feed_type=continuous,
                          decoder=DecodeFun}=State) ->
 
-    {incomplete, DecodeFun2} = try DecodeFun of
-        nil ->
-            post_decode(jsx:decode(Data, [stream]));
-        _ ->
-            DecodeFun(Data)
-    catch error:badarg -> exit(badarg)
-    end,
+    DecodeFunNew = lists:foldl(fun(Data, DecodeFun) ->
+        {incomplete, DecodeFun2} = try case DecodeFun of
+                                           nil ->
+                                               post_decode(jsx:decode(Data, [stream]));
+                                           _ ->
+                                               DecodeFun(Data)
+                                       end
+                                   catch error:badarg -> exit(badarg)
+                                   end,
 
-    try DecodeFun2(end_stream) of
-        Props ->
-            Seq = couchbeam_util:get_value(<<"seq">>, Props),
-            put(last_seq, Seq),
-            Owner ! {Ref, {change, {Props}}},
-            maybe_continue(State#state{decoder=nil})
-    catch error:badarg -> maybe_continue(State#state{decoder=DecodeFun2})
-    end;
+        try DecodeFun2(end_stream) of
+            Props ->
+                Seq = couchbeam_util:get_value(<<"seq">>, Props),
+                put(last_seq, Seq),
+                Owner ! {Ref, {change, {Props}}},
+                nil
+        catch error:badarg -> DecodeFun2
+        end
+    end, DecodeFunRaw, DataList),
+
+    maybe_continue(State#state{decoder=DecodeFunNew});
 decode_data(Data, #state{client_ref=ClientRef,
                          decoder=DecodeFun}=State) ->
     try 
