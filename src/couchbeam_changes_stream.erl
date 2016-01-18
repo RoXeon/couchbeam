@@ -241,7 +241,7 @@ wait_reconnect(#state{parent=Parent,
 decode_data(DataRaw, #state{owner=Owner,
                          ref=Ref,
                          feed_type=continuous,
-                         decoder=DecodeFunNew}=State) ->
+                         decoder=DecodeFunRaw}=State) ->
     DataList = binary:split(DataRaw, <<"\n">>, [global]),
     DecodeFunNew = lists:foldl(fun(Data, DecodeFun) ->
         {incomplete, DecodeFun2} = try case DecodeFun of
