@@ -241,7 +241,7 @@ wait_reconnect(#state{parent=Parent,
 decode_data(Data, #state{owner=Owner,
                          ref=Ref,
                          feed_type=continuous,
-                         decoder=DecodeFun}=State) ->
+                         decoder=DecodeFunRaw}=State) ->
 
     DecodeFunNew = lists:foldl(fun(Data, DecodeFun) ->
         {incomplete, DecodeFun2} = try case DecodeFun of
