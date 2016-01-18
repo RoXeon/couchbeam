@@ -9,7 +9,7 @@
 -export([start_link/4]).
 
 -export([init_stream/5,
-         maybe_continue/1,
+         maybe_continue/1,de
          wait_reconnect/1,
          system_continue/3,
          system_terminate/4,
@@ -238,11 +238,11 @@ wait_reconnect(#state{parent=Parent,
     end.
 
 
-decode_data(Data, #state{owner=Owner,
+decode_data(DataRaw, #state{owner=Owner,
                          ref=Ref,
                          feed_type=continuous,
                          decoder=DecodeFun}=State) ->
-
+    DataList = binary:split(DataRaw, <<"\n">>, [global]),
     DecodeFunNew = lists:foldl(fun(Data, DecodeFun) ->
         {incomplete, DecodeFun2} = try case DecodeFun of
                                            nil ->
