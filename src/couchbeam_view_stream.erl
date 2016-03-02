@@ -86,6 +86,7 @@ init_stream(Parent, Owner, StreamRef, {_Db, _Url, _Args}=Req,
 do_init_stream({#db{options=Opts}, Url, Args}, #state{mref=MRef}=State) ->
     %% we are doing the request asynchronously
     FinalOpts = [{async, once} | Opts],
+
     Reply = case Args#view_query_args.method of
         get ->
             hackney:request(get, Url, [], <<>>, FinalOpts);
@@ -284,7 +285,11 @@ wait_rows({key, <<"rows">>}, {_, _, _, ViewSt}) ->
     {wait_rows1, 0, [[]], ViewSt};
 wait_rows({key, <<"total_rows">>},  {_, _, _, ViewSt}) ->
     {wait_val, 0, [[]], ViewSt};
+wait_rows({key, <<"Collator">>},  {_, _, _, ViewSt}) ->
+    {collect_object, 0, [[]], ViewSt};
 wait_rows({key, <<"offset">>},  {_, _, _, ViewSt}) ->
+    {wait_val, 0, [[]], ViewSt};
+wait_rows({key, <<"update_seq">>},  {_, _, _, ViewSt}) ->
     {wait_val, 0, [[]], ViewSt}.
 
 wait_val({_, _}, {_, _, _, ViewSt}) ->
@@ -310,6 +315,9 @@ collect_object(end_object, {_, NestCount, [Object, {key, Key},
                                            Last|Terms], ViewSt}) ->
     {collect_object, NestCount - 1,
      [[{Key, {lists:reverse(Object)}}] ++ Last] ++ Terms, ViewSt};
+
+collect_object(end_object, {_, 0, [[{[{}]}]], ViewSt}) ->
+    {wait_rows, 0, [[]], ViewSt};
 
 collect_object(end_object, {_, 0, [[], Last|Terms], ViewSt}) ->
     [[Row]] = [[{[{}]}] ++ Last] ++ Terms,
