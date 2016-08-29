@@ -410,9 +410,9 @@ parse_view_options([{skip, Value}|Rest], #view_query_args{options=Opts}=Args) ->
 parse_view_options([{list, Value}|Rest], #view_query_args{options=Opts}=Args) ->
     Opts1 = [{list, Value}|Opts],
     parse_view_options(Rest, Args#view_query_args{options=Opts1});
-parse_view_options([{keys, Value}|Rest], Args) ->
-    parse_view_options(Rest, Args#view_query_args{method=post,
-            keys=Value});
+parse_view_options([{keys, Value}|Rest], #view_query_args{options=Opts}=Args) ->
+    Opts1 = [{keys, couchbeam_ejson:encode(Value)}|Opts],
+    parse_view_options(Rest, Args#view_query_args{options=Opts1});
 parse_view_options([{Key, Value}|Rest], #view_query_args{options=Opts}=Args)
         when is_list(Key) ->
     Opts1 = [{Key, Value}|Opts],
