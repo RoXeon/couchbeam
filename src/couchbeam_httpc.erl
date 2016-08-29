@@ -33,7 +33,13 @@ db_request(Method, Url, Headers, Body, Options, Expect) ->
 
 json_body(Ref) ->
     {ok, Body} = hackney:body(Ref),
-    couchbeam_ejson:decode(Body).
+
+    case Body of
+        <<>> ->
+            {[]};
+        _ ->
+            couchbeam_ejson:decode(Body)
+    end.
 
 make_headers(Method, Url, Headers, Options) ->
     Headers1 = case couchbeam_util:get_value(<<"Accept">>, Headers) of
