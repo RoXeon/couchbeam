@@ -40,13 +40,13 @@ behaviour_info(_) ->
     undefined.
 
 call(Name, Request) ->
-    gen_server:call(Name, Request).
+    gen_server2:call(Name, Request).
 
 call(Name, Request, Timeout) ->
-    gen_server:call(Name, Request, Timeout).
+    gen_server2:call(Name, Request, Timeout).
 
 cast(Dest, Request) ->
-    gen_server:cast(Dest, Request).
+    gen_server2:cast(Dest, Request).
 
 %% @doc create a gen_changes process as part of a supervision tree.
 %% The function should be called, directly or indirectly, by the supervisor.
@@ -58,7 +58,7 @@ cast(Dest, Request) ->
 %%                  {since, integer()|string()} |
 %%                  {heartbeat, string()|boolean()}
 start_link(Module, Db, Options, InitArgs) ->
-    gen_server:start_link(?MODULE, [Module, Db, Options, InitArgs], []).
+    gen_server2:start_link(?MODULE, [Module, Db, Options, InitArgs], []).
 
 init([Module, Db, Options, InitArgs]) ->
     case Module:init(InitArgs) of
@@ -81,10 +81,10 @@ init([Module, Db, Options, InitArgs]) ->
     end.
 
 stop(Pid) when is_pid(Pid) ->
-    gen_server:cast(Pid, stop).
+    gen_server2:cast(Pid, stop).
 
 get_seq(Pid) when is_pid(Pid) ->
-    gen_server:call(Pid, get_seq).
+    gen_server2:call(Pid, get_seq).
 
 handle_call(get_seq, _From, State=#gen_changes_state{last_seq=Seq}) ->
     {reply, Seq, State};

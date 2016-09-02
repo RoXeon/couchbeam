@@ -37,7 +37,7 @@ utc_random() ->
 %% @doc Get a list of uuids from the server
 %% @spec get_uuids(server(), integer()) -> lists()
 get_uuids(Server, Count) ->
-    gen_server:call(?MODULE, {get_uuids, Server, Count}, infinity).
+    gen_server2:call(?MODULE, {get_uuids, Server, Count}, infinity).
 
 %%--------------------------------------------------------------------
 %% Function: start_link/0
@@ -47,7 +47,7 @@ get_uuids(Server, Count) ->
 %% invoked by the supervisor couchbeam_sup
 %% @spec start_link() -> {ok, pid()}
 start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+    gen_server2:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 %%---------------------------------------------------------------------------
 %% gen_server callbacks
