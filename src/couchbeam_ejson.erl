@@ -39,7 +39,7 @@ decode(D) ->
         throw:Error ->
             throw({invalid_json, Error});
         error:badarg ->
-            throw({invalid_json, badarg})
+            throw({invalid_json, {badarg, D}})
     end.
 
 pre_encode({[]}) ->
