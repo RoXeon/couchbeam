@@ -25,7 +25,7 @@
          open_or_create_db/2, open_or_create_db/3, open_or_create_db/4,
          delete_db/1, delete_db/2,
          db_info/1,
-         design_info/2, view_cleanup/1,
+         design_info/2, delete_design/2, view_cleanup/1,
          save_doc/2, save_doc/3, save_doc/4,
          doc_exists/2,
          open_doc/2, open_doc/3,
@@ -277,13 +277,26 @@ all_dbs(#server{url=ServerUrl, options=Opts}, Options) ->
 
 design_info(#db{server=Server, name=DbName, options=Opts}, DesignName) ->
     Url = hackney_url:make_url(couchbeam_httpc:server_url(Server),
-                               [couchbeam_httpc:db_url(DbName), <<"_design">>, DesignName, <<"_info">>],
+                               [DbName, <<"_design">>, DesignName, <<"_info">>],
                                []),
     Resp = couchbeam_httpc:db_request(get, Url, [], <<>>, Opts, [200]),
     case Resp of
         {ok, _, _, Ref} ->
             DesignInfo = couchbeam_httpc:json_body(Ref),
             {ok, DesignInfo};
+        Error ->
+            Error
+    end.
+
+delete_design(#db{server=Server, name=DbName, options=Opts}, DesignName) ->
+    Url = hackney_url:make_url(couchbeam_httpc:server_url(Server),
+                               [DbName, <<"_design/", DesignName/binary>>],
+                               []),
+    Resp = couchbeam_httpc:db_request(delete, Url, [], <<>>, Opts, [200]),
+    case Resp of
+        {ok, _, _, Ref} ->
+            catch hackney:skip_body(Ref),
+            ok;
         Error ->
             Error
     end.
