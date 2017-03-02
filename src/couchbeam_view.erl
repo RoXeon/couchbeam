@@ -410,9 +410,18 @@ parse_view_options([{skip, Value}|Rest], #view_query_args{options=Opts}=Args) ->
 parse_view_options([{list, Value}|Rest], #view_query_args{options=Opts}=Args) ->
     Opts1 = [{list, Value}|Opts],
     parse_view_options(Rest, Args#view_query_args{options=Opts1});
-parse_view_options([{keys, Value}|Rest], Args) ->
-    parse_view_options(Rest, Args#view_query_args{method=post,
-            keys=Value});
+parse_view_options([{keys, Value}|Rest], #view_query_args{options=Opts}=Args) ->
+    Opts1 = [{keys, couchbeam_ejson:encode(Value)}|Opts],
+    parse_view_options(Rest, Args#view_query_args{options=Opts1});
+parse_view_options([{bbox, Value}|Rest], #view_query_args{options=Opts}=Args) ->
+    Opts1 = [{bbox, Value}|Opts],
+    parse_view_options(Rest, Args#view_query_args{options=Opts1});
+parse_view_options([{start_range, Value}|Rest], #view_query_args{options=Opts}=Args) ->
+    Opts1 = [{start_range, couchbeam_ejson:encode(Value)}|Opts],
+    parse_view_options(Rest, Args#view_query_args{options=Opts1});
+parse_view_options([{end_range, Value}|Rest], #view_query_args{options=Opts}=Args) ->
+    Opts1 = [{end_range, couchbeam_ejson:encode(Value)}|Opts],
+    parse_view_options(Rest, Args#view_query_args{options=Opts1});
 parse_view_options([{Key, Value}|Rest], #view_query_args{options=Opts}=Args)
         when is_list(Key) ->
     Opts1 = [{Key, Value}|Opts],
@@ -431,9 +440,14 @@ make_view(#db{server=Server}=Db, ViewName, Options, Fun) ->
                                        Args#view_query_args.options),
             Fun(Args, Url);
         {DName, VName} ->
+            ViewType =
+                case lists:member(spatial, Options) of
+                    true -> <<"_spatial">>;
+                    false -> <<"_view">>
+                end,
             Url = hackney_url:make_url(couchbeam_httpc:server_url(Server),
                                        [couchbeam_httpc:db_url(Db), <<"_design">>,
-                                        DName, <<"_view">>, VName],
+                                        DName, ViewType, VName],
                                        Args#view_query_args.options),
             Fun(Args, Url);
         _ ->
@@ -470,7 +484,7 @@ collect_view_results(Ref, Acc) ->
             %% in case we got some results
             Rows = lists:reverse(Acc),
             {error, Error, Rows}
-    after 10000 ->
+    after 100000 ->
               {error, timeout}
     end.
 
